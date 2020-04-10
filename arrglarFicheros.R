@@ -2,10 +2,11 @@
 library(readr)
 library(dplyr)
 library(tidyr)
+library(rmarkdown)
 # Traer archivo de base de datos
 DISTRITOS2019 <- sqlFetch(conn,"DISTRITOS2019")
 #Al venir de la base de datos, la columna de ID (que está hecha de números) es cambiada a numérica.
-#Por ello toca nuevamente volverla a carácter.
+#Por ello toca nuevamente volverla a caracter.
 DISTRITOS2019$ID2019 <- as.character(DISTRITOS2019$ID2019)
 #Crear columnas en el fichero 03
 X03021911$partidos <- substr(X03021911$X1,9,14)
@@ -77,3 +78,5 @@ getafe20191110Distrito <- getafe20191110 %>%
     blancos=sum(blancos),
     validos=sum(validos)
     ) 
+# Render el manual correspondiente
+render("Manual.Rmd")
