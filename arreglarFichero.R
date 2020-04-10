@@ -9,24 +9,6 @@ X09021911 <- read_csv("C:/Users/ortiz/OneDrive/Escritorio/eleccion20191110/09021
                       col_names = FALSE)
 X10021911 <- read_csv("C:/Users/ortiz/OneDrive/Escritorio/eleccion20191110/10021911.DAT", 
                       col_names = FALSE)
-# CARGA DE LIBRERIAS Y CONEXION----
-library(RODBC)
-dsn_driver <- "{IBM DB2 ODBC DRIVER}"
-dsn_database <- "BLUDB"            
-dsn_hostname <- "dashdb-txn-sbox-yp-lon02-02.services.eu-gb.bluemix.net" 
-dsn_port <- "50000"                
-dsn_protocol <- "TCPIP"            
-dsn_uid <- "nkg63522"        
-dsn_pwd <- "fsck70shc3-7n58l" 
-conn_path <- paste("DRIVER=",dsn_driver,
-                   ";DATABASE=",dsn_database,
-                   ";HOSTNAME=",dsn_hostname,
-                   ";PORT=",dsn_port,
-                   ";PROTOCOL=",dsn_protocol,
-                   ";UID=",dsn_uid,
-                   ";PWD=",dsn_pwd,sep="")
-conn <- odbcDriverConnect(conn_path)
-conn
 # Pedir las tablas del ESQUEMA
 sqlTables(conn,schema="NKG63522")
 DISTRITOS2019 <- sqlFetch(conn,"DISTRITOS2019")
