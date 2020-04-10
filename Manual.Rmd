@@ -2,7 +2,7 @@
 title: "Manual"
 author: "Marco Ortiz Palanques"
 date: "4/9/2020"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -194,16 +194,34 @@ getafe20191110 <- X10021911 %>%
   pivot_wider(names_from=nombreCorto, values_from=votos) %>%
   group_by(ID2019)
 ```
+  
+Ahora vamos a crear dos columnas de ID que nos permitan hace los join con los otros data.frame:  
+
+1. El ID2019Mesa. El primer dígito corresponde al distrito censal, los dos siguientes a la sección y la letra al final a la mesa electoral. Se crea para que sea homogénea con el identificador del data.frame en getafeTotales.  
+2. El ID2019. Es una versión homogénea con el ID2019 que viene del data.frame DISTRITOS2019.  
+
 
 ```{r enlazarData04, include=TRUE, eval=FALSE}
 #Homogeneizar el ID en getafe20191110 a DISTRITO2019
 getafe20191110$ID2019Mesa <- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe20191110$ID2019,4,5),getafe20191110$mesa)
 getafe20191110$ID2019 <- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe20191110$ID2019,4,5))
+```
+  
+  
+Ahora vamos a unir dos dos conjuntos de datos al data.frame getafe20191110:  
+
+1. Los correspondientes a los datos totales por mesa que vienen del data.frame X09021911.  
+2. La asignación de a cuál distrito municipal pertenece cada mesa.  
+
+```{r enlazarData05, include=TRUE, eval=FALSE}
 #Añadir los datos totales
 getafe20191110 <- left_join(getafe20191110,getafeTotales,by="ID2019Mesa")
 #Añadir los distritos a getafe20191110
 getafe20191110 <- left_join(getafe20191110,DISTRITOS2019,by="ID2019")
 ```
+  
+  
+En este paso vamos a crear la tabla sintetizada por Distrito. En este punto ya se puede sintetizar también por sección censal usando el ID2019 (no el ID2019Mesa). Usamos nuevamente un pipe. Con él seleccionamos las columnas de datos y con los nombres de los distritos. Luego agupamos por distrito. Finalmente sumamos cada una de las columnas de los partidos, votos blanco, nulos y censo del INE y votos válidos .  
 
 
 ```{r tablaFinal, include=TRUE, eval=FALSE}

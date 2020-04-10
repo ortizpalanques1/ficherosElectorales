@@ -3,6 +3,7 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(rmarkdown)
+library(ggplot2)
 # Traer archivo de base de datos
 DISTRITOS2019 <- sqlFetch(conn,"DISTRITOS2019")
 #Al venir de la base de datos, la columna de ID (que está hecha de números) es cambiada a numérica.
@@ -78,5 +79,9 @@ getafe20191110Distrito <- getafe20191110 %>%
     blancos=sum(blancos),
     validos=sum(validos)
     ) 
+
+Grafico <- ggplot(getafe20191110Distrito[,1:2],aes(x=DISTRITO, y=Cs))+
+  geom_bar(stat="identity", width=0.7, position=position_dodge(width=0.8), fill="#fa5000")+
+  coord_flip()
 # Render el manual correspondiente
 render("Manual.Rmd")

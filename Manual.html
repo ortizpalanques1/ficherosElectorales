@@ -406,13 +406,218 @@ X09021911 &lt;- read_csv(&quot;C:/directorio/09021911.DAT&quot;,
 X10021911 &lt;- read_csv(&quot;C:/directorio/10021911.DAT&quot;, 
                       col_names = FALSE)</code></pre>
 </div>
+<div id="data.frame-con-las-claves-de-los-distritos-del-municipio" class="section level3">
+<h3>data.frame con las claves de los distritos del municipio</h3>
+<p>El nivel menor de datos electorales es la mesa, sigue la sección censal, el distrito censal Las diferentes secciones son organizadas en centros electorales (los centros educativos donde se vota). Los municipios, por su parte, pueden tener una división adicional que llamaremos genéricamente el distrito municipal(trataremos de idetificarlos completamente en cada caso para que no se confundan con los distritos censales). Los límites de los distritos municipales no necesarimente coinciden con los de las secciones. Sin embargo, una parte importante del análisis es proporcionar información sobre estas unidades administrativas, pues forman unidades sociales dentro de la comunidad. Por ello, para el caso que nos ocupa hemos preparado un fichero donde hemos ubicado las secciones electorales dentro de los distritos municipales, aunque en algunos caso hemos tenido que hacer decisiones de ubicación por la superposición de límites.<br />
+En nuestro caso lo trajimos de la base de datos usando la librería RODBC.</p>
+<pre class="r"><code>library(RODBC)
+dsn_driver &lt;- &quot;{XXX}&quot;
+dsn_database &lt;- &quot;XXX&quot;            
+dsn_hostname &lt;- &quot;XXX&quot; 
+dsn_port &lt;- &quot;XXX&quot;                
+dsn_protocol &lt;- &quot;XXX&quot;            
+dsn_uid &lt;- &quot;XXX&quot;        
+dsn_pwd &lt;- &quot;XXX&quot; 
+conn_path &lt;- paste(&quot;DRIVER=&quot;,dsn_driver,
+                   &quot;;DATABASE=&quot;,dsn_database,
+                   &quot;;HOSTNAME=&quot;,dsn_hostname,
+                   &quot;;PORT=&quot;,dsn_port,
+                   &quot;;PROTOCOL=&quot;,dsn_protocol,
+                   &quot;;UID=&quot;,dsn_uid,
+                   &quot;;PWD=&quot;,dsn_pwd,sep=&quot;&quot;)
+conn &lt;- odbcDriverConnect(conn_path)
+# Traer archivo de base de datos
+DISTRITOS2019 &lt;- sqlFetch(conn,&quot;DISTRITOS2019&quot;)
+#Al venir de la base de datos, la columna de ID (que está hecha de números) es cambiada a numérica.
+#Por ello toca nuevamente volverla a caracter.
+DISTRITOS2019$ID2019 &lt;- as.character(DISTRITOS2019$ID2019)</code></pre>
+<table>
+<caption>Tabla de distritos municipales</caption>
+<thead>
+<tr class="header">
+<th align="left">DISTRITO</th>
+<th align="left">PKB</th>
+<th align="left">ID2019</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">CENTRO</td>
+<td align="left">CE</td>
+<td align="left">102</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO</td>
+<td align="left">CE</td>
+<td align="left">103</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO</td>
+<td align="left">CE</td>
+<td align="left">104</td>
+</tr>
+<tr class="even">
+<td align="left">CENTRO</td>
+<td align="left">CE</td>
+<td align="left">105</td>
+</tr>
+<tr class="odd">
+<td align="left">CENTRO</td>
+<td align="left">CE</td>
+<td align="left">106</td>
+</tr>
+</tbody>
+</table>
+<p>La mejor forma de entender la tabla es leer las columnas de derecha a izquierda. En la columna ID2019 se encuentra el ID de cada sección electoral: el primer dígito es el número del distrito censal y los dos últimos dígitos corresponden a la sección censal. El archivo tienen una fila por cada sección electoral del municipio. En la columna central está la sigla del distrito municipal (no censal) y en la columna d ela izquierda el nombre del distrito municipal al que pertenece cada sección censal.</p>
 </div>
-<div id="leer-archivos" class="section level2">
-<h2>Leer archivos</h2>
-<p>Los archivos se bajan en la página del Ministerio del Interior. Los archivos que se leerán serán 03, 09 y 10 Una vez descomprimidos podemos guardarlos en un directorio. Los archivos con la data vienen numerados del 01 al 10 y tienen la extensión .DAT. Hay además otros dos archivos con las instrucciones. Para abrir el archivo en RStudio como un data frame vamos a File&gt; Import Dataset&gt; From Text (readr)… Allí, seleccionamos el archivo a descargar y desmarcamos la opción “First row as names”. Para el archivo 03 hay que seleccionar, además, locale&gt; onfigure&gt; encoding&gt; ASCII y luego apretar “Configure” en esa ventana. Como R no acepta que los nombres de los data frames comiencen con números, el nombre sugerido comenzará con “X” más el nombre original del archivo.</p>
 </div>
-<div id="seleccionar-el-municipio" class="section level2">
-<h2>Seleccionar el municipio</h2>
+<div id="preparacion-de-los-ficheros" class="section level2">
+<h2>Preparación de los ficheros</h2>
+<p>Como podemos ver al consultar los archivos de los datos X03021911,X09021911,X10021911, la forma de los ficheros ha sido simplificada para el mejor almacenamiento y extracción de datos.</p>
+<div id="data.frame-x03021911.-nombres-de-los-partidos" class="section level3">
+<h3>data.frame X03021911. Nombres de los partidos</h3>
+<p>El data frame X03021911 contiene los códigos, abreviaturas y nombres completos de las organizaciones electorales participantes en el proceso electoral. A partir de su data podemos separar estas informaciones en columnas. Para ello usamos la función substr, creando una columna nueva p.e. X03021911$partidos. Veamos el proceso en detalle:</p>
+<ol style="list-style-type: decimal">
+<li>A la columna que hemos creado le asignamos valores de la columna original X03021911$X1 mediante el comando substr.</li>
+<li>Antes de seguir debemos ir al manual ficheros.doc y buscar las instrucciones de la tabal 3. Allí se indica que el código de los partidos ocupa desde el 9º caracter hasta el 14º.</li>
+<li>El primer argumento de la función es la propia columna X03021911$X1 de donde extraemos los datos.<br />
+</li>
+<li>El segundo argumento es donde comenzamos a extraer los caracteres de esa columna. Para nuestro ejemplo, comenzamos a extraer del caracter 9.<br />
+</li>
+<li>El tercer argumento es hasta cuál caracter extraemos, en este caso el 14.<br />
+</li>
+<li>Seguimos el mismo procedimiento para extraer la abreviatura (nombreCorto) y el nombre completo (nombreLargo) del partido.<br />
+</li>
+<li>Finalmente, quitamos los espacios en blanco para disponer mejor de los nombreCorto cuando el futuro los convirtamos en cabeceras de columnas.</li>
+</ol>
+<pre class="r"><code>#Crear columnas en el fichero 03
+X03021911$partidos &lt;- substr(X03021911$X1,9,14)
+X03021911$nombreCorto &lt;- substr(X03021911$X1,15,64)
+X03021911$nombreLargo &lt;- substr(X03021911$X1,65,214)
+X03021911$nombreCorto &lt;- gsub(&quot; &quot;,&quot;&quot;,X03021911$nombreCorto)
+X03021911$nombreCorto &lt;- gsub(&quot;-&quot;,&quot;&quot;,X03021911$nombreCorto)</code></pre>
+</div>
+<div id="data.frame-x09021911.-datos-generales-de-la-mesa" class="section level3">
+<h3>data.frame X09021911. Datos generales de la mesa</h3>
+<p>La idea aquí, es la misma que en el data.frame anterior: obtener unas columnas con datos claros. En estos casos hemos obtenido los siguientes:</p>
+<ol style="list-style-type: decimal">
+<li>localidad: es el código del municipio y está compuesto por 7 dígitos. Los dos primeros señalan la comunidad autonómica, el 3º y el 4º la provincia y los tres últimos el municipio.<br />
+</li>
+<li>distrito: aíslamos el distrito censal del municipio.<br />
+</li>
+<li>seccion (sección: sin tilde para evitar conflictos): número de la sección censal.<br />
+</li>
+<li>mesa: letra correspondiente a la mesa de la sección censal.<br />
+</li>
+<li>censoINE: es el número de electores registrados para cada mesa. Hay también el registro de los votantes en el extranjero; pero en este caso lo hemos obviado.<br />
+</li>
+<li>blancos: número de votos blancos.<br />
+</li>
+<li>nulos: número de votos nulos.<br />
+</li>
+<li>validos (válidos: sin tilde para evitar conflictos): número de votos válidos.<br />
+</li>
+<li>Todas las columnas se crearon como “character”, por lo que es necesario pasar las que contienen números a “numeric” (censoINE, blancos, nulos, validos).<br />
+</li>
+<li>Finalmente, creamos el ID2019Mesa, identificador para cada mesa, compuesto del número del distrito censal, el de la seccion y la letra de la mesa. Cuando se extraiga un municipio en particular se convertirá en su identificador único.</li>
+</ol>
+<pre class="r"><code>#Crear columnas en el fichero 09
+X09021911$localidad &lt;- substr(X09021911$X1,10,16)
+X09021911$distrito &lt;- substr(X09021911$X1,17,18)
+X09021911$seccion &lt;- substr(X09021911$X1,19,22)
+X09021911$mesa &lt;- substr(X09021911$X1,23,23)
+X09021911$censoINE &lt;- substr(X09021911$X1,24,30)
+X09021911$blancos &lt;- substr(X09021911$X1,66,72)
+X09021911$nulos &lt;- substr(X09021911$X1,73,79)
+X09021911$validos &lt;- substr(X09021911$X1,80,86)
+X09021911$censoINE &lt;- as.numeric(X09021911$censoINE)
+X09021911$blancos &lt;- as.numeric(X09021911$blancos)
+X09021911$nulos &lt;- as.numeric(X09021911$nulos)
+X09021911$validos &lt;- as.numeric(X09021911$validos)
+X09021911$ID2019Mesa &lt;- paste0(substr(X09021911$distrito,2,2),substr(X09021911$seccion,2,3),X09021911$mesa)</code></pre>
+</div>
+<div id="data.frame-x10021911.-resultados-electorales-por-mesa" class="section level3">
+<h3>data.frame X10021911. Resultados electorales por mesa</h3>
+<p>Para el data frame que contiene los datos por partido hacemos un proceso similar.<br />
+Lo importante de este fichero es que contiene tantas líneas como partidos han participado en cada mesa. En el data.frame anterior el número de filas es igual al de todas las mesas en España. En este data.frame X10021911 para cada mesa se desdobla en el número de partidos que allí participaron y cada fila representa el resultado de un solo partido dentro de cada mesa.</p>
+<pre class="r"><code>#Crear columnas fichero 10
+X10021911$localidad &lt;- substr(X10021911$X1,10,16)
+X10021911$distrito &lt;- substr(X10021911$X1,17,18)
+X10021911$seccion &lt;- substr(X10021911$X1,19,22)
+X10021911$mesa &lt;- substr(X10021911$X1,23,23)
+X10021911$partidos &lt;- substr(X10021911$X1,24,29)
+X10021911$votos &lt;- substr(X10021911$X1,30,36)
+X10021911$votos &lt;- as.numeric(X10021911$votos)</code></pre>
+</div>
+</div>
+<div id="creacion-de-la-tabla" class="section level2">
+<h2>Creación de la tabla</h2>
+<p>Con los datos ya acomodados vamos a crear el data.frame correspondiente a un municipio.<br />
+Primeramente vamos a crear las columna con los nombres de los partidos en el data.frame con todos los resultados (X10021911) y seleccionaremos las columnas que necesitaremos posteriormente.</p>
+<pre class="r"><code>#Poner los nombres de los partidos y arreglar data.frame
+X10021911 &lt;- left_join(X10021911,X03021911[,2:3],by=&quot;partidos&quot;)
+X10021911 &lt;- X10021911[,c(2,3,4,5,8,7)]</code></pre>
+<p>Ahora comenzamos la extracción del municipio de nuestro interés. En este caso la Comunidad Autónoma es la 12 (Madrid), la provincia la 28 (Madrid) y el municipio el 065 (Getafe). Extraemos los datos del municipio del data.frame de los totales (X09021911). Para esto creamos un nuevo data.frame (getafeTotales) y usando las funciones filter y select de dplyr y construimos unos pipes para obtener el resultado deseado. Con filter separamos nuestro municipio de interés y con select separamos las columnas que contienen los datos de las mesas y su identificador.</p>
+<pre class="r"><code>#Extraer el municipio de interés de archivo X09021911
+getafeTotales &lt;- X09021911 %&gt;% 
+  filter(localidad==&quot;1228065&quot;) %&gt;% 
+  select(6:10)</code></pre>
+<p>Ahora creamos el data.frame con los resultados electorales. Este es un paso muy importante. pues el resultado final ya será una tabla fácilmente comprensible y que se puede usar para otras aplicaciones. Creamos el data.frame getafe20191110 a partir X10021911 de la siguiente manera:</p>
+<ol style="list-style-type: decimal">
+<li>Filtramos la localidad como lo hicimos en el paso anterior.<br />
+</li>
+<li>Creamos con mutate una nueva columna ID2019 que luego usaremos para crear otras columnas y hacer unos left_join.<br />
+</li>
+<li>El paso más importante es pasar de la presentación larga a aquella donde se visualicen los partidos para cada mesa. Para ello usamos pivot_wider de tidyr names_from señala la columna de donde extraremos los nombres de los partidos. Cada nombre hará una columna nueva. Los datos para llenar esas columnas provendrán de values_from.</li>
+</ol>
+<pre class="r"><code>#Extraer el municipio de interés de archivo X10021911
+getafe20191110 &lt;- X10021911 %&gt;%
+  filter(localidad==&quot;1228065&quot;) %&gt;%
+  mutate(ID2019=paste0(distrito,seccion)) %&gt;%
+  pivot_wider(names_from=nombreCorto, values_from=votos) %&gt;%
+  group_by(ID2019)</code></pre>
+<p>Ahora vamos a crear dos columnas de ID que nos permitan hace los join con los otros data.frame:</p>
+<ol style="list-style-type: decimal">
+<li>El ID2019Mesa. El primer dígito corresponde al distrito censal, los dos siguientes a la sección y la letra al final a la mesa electoral. Se crea para que sea homogénea con el identificador del data.frame en getafeTotales.<br />
+</li>
+<li>El ID2019. Es una versión homogénea con el ID2019 que viene del data.frame DISTRITOS2019.</li>
+</ol>
+<pre class="r"><code>#Homogeneizar el ID en getafe20191110 a DISTRITO2019
+getafe20191110$ID2019Mesa &lt;- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe20191110$ID2019,4,5),getafe20191110$mesa)
+getafe20191110$ID2019 &lt;- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe20191110$ID2019,4,5))</code></pre>
+<p>Ahora vamos a unir dos dos conjuntos de datos al data.frame getafe20191110:</p>
+<ol style="list-style-type: decimal">
+<li>Los correspondientes a los datos totales por mesa que vienen del data.frame X09021911.<br />
+</li>
+<li>La asignación de a cuál distrito municipal pertenece cada mesa.</li>
+</ol>
+<pre class="r"><code>#Añadir los datos totales
+getafe20191110 &lt;- left_join(getafe20191110,getafeTotales,by=&quot;ID2019Mesa&quot;)
+#Añadir los distritos a getafe20191110
+getafe20191110 &lt;- left_join(getafe20191110,DISTRITOS2019,by=&quot;ID2019&quot;)</code></pre>
+<p>En este paso vamos a crear la tabla sintetizada por Distrito. En este punto ya se puede sintetizar también por sección censal usando el ID2019 (no el ID2019Mesa). Usamos nuevamente un pipe. Con él seleccionamos las columnas de datos y con los nombres de los distritos. Luego agupamos por distrito. Finalmente sumamos cada una de las columnas de los partidos, votos blanco, nulos y censo del INE y votos válidos .</p>
+<pre class="r"><code>#Agrupar por distrito
+getafe20191110Distrito &lt;- getafe20191110 %&gt;% 
+  select(5:24) %&gt;% 
+  group_by(DISTRITO) %&gt;% 
+  summarise(
+    Cs=sum(Cs),
+    VOX=sum(VOX),
+    PP=sum(PP),
+    PSOE=sum(PSOE),
+    PODEMOSIU=sum(PODEMOSIU),
+    `PUM+J`=sum(`PUM+J`),
+    PACMA=sum(PACMA),
+    MASPAMSEQ=sum(MASPAMSEQ),
+    PH=sum(PH),
+    PCTE=sum(PCTE),
+    R0=sum(RECORTESCEROGVPCASTC),
+    PCPE=sum(PCPE),
+    censoINE=sum(censoINE),
+    nulos=sum(nulos),
+    blancos=sum(blancos),
+    validos=sum(validos)
+    ) </code></pre>
 </div>
 
 
