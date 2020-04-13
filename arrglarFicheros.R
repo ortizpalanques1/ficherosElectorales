@@ -69,7 +69,7 @@ getafe20191110Distrito <- getafe20191110 %>%
     PODEMOSIU=sum(PODEMOSIU),
     `PUM+J`=sum(`PUM+J`),
     PACMA=sum(PACMA),
-    MASPAMSEQ=sum(MASPAMSEQ),
+    MASM=sum(MASPAMSEQ),
     PH=sum(PH),
     PCTE=sum(PCTE),
     R0=sum(RECORTESCEROGVPCASTC),
@@ -79,9 +79,80 @@ getafe20191110Distrito <- getafe20191110 %>%
     blancos=sum(blancos),
     validos=sum(validos)
     ) 
+#Agrupar por seccion
+getafe20191110Seccion <- getafe20191110 %>% 
+  select(5:24) %>% 
+  group_by(ID2019) %>% 
+  summarise(
+    Cs=sum(Cs),
+    VOX=sum(VOX),
+    PP=sum(PP),
+    PSOE=sum(PSOE),
+    PODEMOSIU=sum(PODEMOSIU),
+    `PUM+J`=sum(`PUM+J`),
+    PACMA=sum(PACMA),
+    MASM=sum(MASPAMSEQ),
+    PH=sum(PH),
+    PCTE=sum(PCTE),
+    R0=sum(RECORTESCEROGVPCASTC),
+    PCPE=sum(PCPE),
+    censoINE=sum(censoINE),
+    nulos=sum(nulos),
+    blancos=sum(blancos),
+    validos=sum(validos)
+  ) 
+# El gráfico
+## Construir el data frame y las variables necesarias
+### Seleccionamos la fila con el distrito municipal de nuestro interés
+### Nombre del distrito
+xx <- "Valle Arriba"
+dataGraficante <- getafe20191110Distrito %>% 
+  filter(DISTRITO==xx) %>% 
+  select(2:13) 
+dataGraficante <- as.data.frame(t(dataGraficante))
+dataGraficante$nomina <- rownames(dataGraficante)
+dataGraficante <- dataGraficante[order(dataGraficante$V1, decreasing = TRUE),]
+dataGraficanteAdd <- data.frame("V1"=sum(dataGraficante$V1[9:nrow(dataGraficante)]), "nomina"="Otros")
+dataGraficante <- rbind(dataGraficante[1:8,],dataGraficanteAdd[1,])
+percenta <- round((dataGraficante$V1/sum(dataGraficante$V1))*100,2)
+breaks <- cumsum(porcentaje)
+semiSegmenta <- breaks-(percenta/2)
+nomina <- c("apple","pear","orange","eggplant","lettuce","cherry","banana","carrot","mango")
+colores <- c("coral","chartreuse3","darkorange","darkorchid","chartreuse1","darkred","darkorange1","darksalmon","yellow")
 
-Grafico <- ggplot(getafe20191110Distrito[,1:2],aes(x=DISTRITO, y=Cs))+
-  geom_bar(stat="identity", width=0.7, position=position_dodge(width=0.8), fill="#fa5000")+
-  coord_flip()
-# Render el manual correspondiente
-render("Manual.Rmd")
+# Gráfico para ocho partidos
+gg.gauge <- function(breaks,porcentaje) {
+  require(ggplot2)
+  get.poly <- function(a,b,r1=0.5,r2=1.0) {
+    th.start <- pi*(1-a/100)
+    th.end   <- pi*(1-b/100)
+    th       <- seq(th.start,th.end,length=100)
+    x        <- c(r1*cos(th),rev(r2*cos(th)))
+    y        <- c(r1*sin(th),rev(r2*sin(th)))
+    return(data.frame(x,y))
+  }
+  ggplot()+ 
+    geom_polygon(data=get.poly(0,breaks[1]),aes(x,y),fill=colores[1])+
+    geom_polygon(data=get.poly(breaks[1],breaks[2]),aes(x,y),fill=colores[2])+
+    geom_polygon(data=get.poly(breaks[2],breaks[3]),aes(x,y),fill=colores[3])+
+    geom_polygon(data=get.poly(breaks[3],breaks[4]),aes(x,y),fill=colores[4])+
+    geom_polygon(data=get.poly(breaks[4],breaks[5]),aes(x,y),fill=colores[5])+
+    geom_polygon(data=get.poly(breaks[5],breaks[6]),aes(x,y),fill=colores[6])+
+    geom_polygon(data=get.poly(breaks[6],breaks[7]),aes(x,y),fill=colores[7])+
+    geom_polygon(data=get.poly(breaks[7],breaks[8]),aes(x,y),fill=colores[8])+
+    geom_polygon(data=get.poly(breaks[8],breaks[9]),aes(x,y),fill=colores[9])+
+    geom_text(data=as.data.frame(porcentaje), size=ifelse(porcentaje>10,2,1), fontface="bold", vjust=0,
+              aes(x=0.75*cos(pi*(1-semiSegmenta/100)),y=0.75*sin(pi*(1-semiSegmenta/100)),label=paste0(nomina,": ",porcentaje,"%")))+
+    coord_fixed()+
+    labs(title=paste0("Porcentaje por partidos: ",xx),
+         caption = "Fuente: Min.In., Cálculos propios")+
+    theme_bw()+
+    theme(axis.text=element_blank(),
+          axis.title=element_blank(),
+          axis.ticks=element_blank(),
+          panel.grid=element_blank(),
+          panel.border=element_blank()) 
+  glipho<-paste0(xx,"porcentaje",".png")
+  ggsave(glipho,width=10, height=6,units="cm")
+}
+gg.gauge(breaks,percenta)
