@@ -1,5 +1,5 @@
 ---
-title: "Manual"
+title: "Manual para la extracción de datos electorales usando R"
 author: "Marco Ortiz Palanques"
 date: "4/9/2020"
 output: pdf_document
@@ -75,14 +75,20 @@ La mejor forma de entender la tabla es leer las columnas de derecha a izquierda.
 ## Preparación de los ficheros  
 Como podemos ver al consultar los archivos de los datos X03021911,X09021911,X10021911, la forma de los ficheros ha sido simplificada para el mejor almacenamiento y extracción de datos.  
 
-### data.frame X03021911. Nombres de los partidos  
+### data.frame X03021911. Nombres de los partidos 
+
+```{r A03, echo=FALSE, results="asis"}
+library(knitr)
+kable(A03[1:3,],caption="El data.frame con los datos de los partidos")
+```
+  
 
 El data frame X03021911 contiene los códigos, abreviaturas y nombres completos de las organizaciones electorales participantes en el proceso electoral. A partir de su data podemos separar estas informaciones en columnas. Para ello usamos la función substr, creando una columna nueva p.e. X03021911$partidos. Veamos el proceso en detalle:  
 
 1. A la columna que hemos creado le asignamos valores de la columna original X03021911$X1 mediante el comando substr.
-2. Antes de seguir debemos ir al manual ficheros.doc y buscar las instrucciones de la tabal 3. Allí se indica que el código de los partidos ocupa desde el 9º caracter hasta el 14º. 
+2. Antes de seguir debemos ir al manual ficheros.doc y buscar las instrucciones de la tabla 3. Allí se indica que el código de los partidos ocupa desde el 9º caracter hasta el 14º. 
 3. El primer argumento de la función es la propia columna X03021911$X1 de donde extraemos los datos.  
-4. El segundo argumento es donde comenzamos a extraer los caracteres de esa columna. Para nuestro ejemplo, comenzamos a extraer del caracter 9.  
+4. El segundo argumento es donde comenzamos a extraer los caracteres de esa columna. Para nuestro ejemplo, comenzamos a extraer del caracter 9. 
 5. El tercer argumento es hasta cuál caracter extraemos, en este caso el 14.  
 6. Seguimos el mismo procedimiento para extraer la abreviatura (nombreCorto) y el nombre completo (nombreLargo) del partido.  
 7. Finalmente, quitamos los espacios en blanco para disponer mejor de los nombreCorto cuando el futuro los convirtamos en cabeceras de columnas.  
@@ -98,8 +104,23 @@ X03021911$nombreCorto <- gsub(" ","",X03021911$nombreCorto)
 X03021911$nombreCorto <- gsub("-","",X03021911$nombreCorto)
 ```
   
+
+```{r B03, echo=FALSE, results="asis"}
+library(knitr)
+kable(B03[1:3,2:4],caption="El data.frame con los nombres de partido separados")
+```
+    
+  
   
 ### data.frame X09021911. Datos generales de la mesa  
+
+
+```{r A09, echo=FALSE, results="asis"}
+library(knitr)
+kable(A09[1:3,],caption="El data.frame con los totales de las mesas")
+```
+  
+
 La idea aquí, es la misma que en el data.frame anterior: obtener unas columnas con datos claros. En estos casos hemos obtenido los siguientes:  
   
   
@@ -137,7 +158,22 @@ X09021911$ID2019Mesa <- paste0(substr(X09021911$distrito,2,2),substr(X09021911$s
 ```
   
   
+```{r B09, echo=FALSE, results="asis"}
+library(knitr)
+kable(B09[1:3,2:9],caption="El data.frame con los resultado por partido")
+```
+    
+  
+  
 ### data.frame X10021911. Resultados electorales por mesa  
+
+
+
+```{r A10, echo=FALSE, results="asis"}
+library(knitr)
+kable(A09[1:3,],caption="El data.frame con los resultado por partido")
+```
+  
 
 Para el data frame que contiene los datos por partido hacemos un proceso similar.  
 Lo importante de este fichero es que contiene tantas líneas como partidos han participado en cada mesa. En el data.frame anterior el número de filas es igual al de todas las mesas en España. En este data.frame X10021911 para cada mesa se desdobla en el número de partidos que allí participaron y cada fila representa el resultado de un solo partido dentro de cada mesa.
@@ -155,6 +191,13 @@ X10021911$votos <- as.numeric(X10021911$votos)
 ```
   
   
+```{r B10, echo=FALSE, results="asis"}
+library(knitr)
+kable(B10[1:3,2:7],caption="El data.frame con el resultado de cada partido extraído")
+```
+    
+  
+  
 ## Creación de la tabla  
 Con los datos ya acomodados vamos a crear el data.frame correspondiente a un municipio.  
 Primeramente vamos a crear las columna con los nombres de los partidos en el data.frame con todos los resultados (X10021911) y seleccionaremos las columnas que necesitaremos posteriormente. 
@@ -167,6 +210,12 @@ X10021911 <- X10021911[,c(2,3,4,5,8,7)]
 ```
   
   
+```{r C10, echo=FALSE, results="asis"}
+library(knitr)
+kable(c10[1:3,],caption="El data.frame con los datos de cada partido")
+```
+ 
+  
 Ahora comenzamos la extracción del municipio de nuestro interés. En este caso la Comunidad Autónoma es la 12 (Madrid), la provincia la 28 (Madrid) y el municipio el 065 (Getafe). Extraemos los datos del municipio del data.frame de los totales (X09021911). Para esto creamos un nuevo data.frame (getafeTotales) y usando las funciones filter y select de dplyr y construimos unos pipes para obtener el resultado deseado. Con filter separamos nuestro municipio de interés y con select separamos las columnas que contienen los datos de las mesas y su identificador.  
 
 
@@ -178,6 +227,13 @@ getafeTotales <- X09021911 %>%
   select(6:10)
 ```
   
+  
+```{r D09, echo=FALSE, results="asis"}
+library(knitr)
+kable(D09[1:3,],caption="El data.frame con solamente los resultados del partido")
+```
+  
+      
 
 Ahora creamos el data.frame con los resultados electorales. Este es un paso muy importante. pues el resultado final ya será una tabla fácilmente comprensible y que se puede usar para otras aplicaciones. Creamos el data.frame getafe20191110 a partir X10021911 de la siguiente manera:  
 
@@ -195,6 +251,13 @@ getafe20191110 <- X10021911 %>%
   group_by(ID2019)
 ```
   
+  
+```{r E10, echo=FALSE, results="asis"}
+library(knitr)
+kable(E10[1:3,1:9],caption="El data.frame con el resultado del municipio de elección")
+```
+   
+    
 Ahora vamos a crear dos columnas de ID que nos permitan hace los join con los otros data.frame:  
 
 1. El ID2019Mesa. El primer dígito corresponde al distrito censal, los dos siguientes a la sección y la letra al final a la mesa electoral. Se crea para que sea homogénea con el identificador del data.frame en getafeTotales.  
@@ -207,6 +270,17 @@ getafe20191110$ID2019Mesa <- paste0(substr(getafe20191110$ID2019,2,2),substr(get
 getafe20191110$ID2019 <- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe20191110$ID2019,4,5))
 ```
   
+```{r F10, echo=FALSE, results="asis"}
+library(knitr)
+kable(F10[1:3,1:8],caption="La tabla en el nivel de mesas electorales")
+```
+    
+    
+```{r G10, echo=FALSE, results="asis"}
+library(knitr)
+kable(G10[1:3,c(1:8,23:24)],caption="La tabla anterior con los datos de identificación")
+```
+        
   
 Ahora vamos a unir dos dos conjuntos de datos al data.frame getafe20191110:  
 
@@ -221,6 +295,7 @@ getafe20191110 <- left_join(getafe20191110,DISTRITOS2019,by="ID2019")
 ```
   
   
+
 En este paso vamos a crear la tabla sintetizada por Distrito. En este punto ya se puede sintetizar también por sección censal usando el ID2019 (no el ID2019Mesa). Usamos nuevamente un pipe. Con él seleccionamos las columnas de datos y con los nombres de los distritos. Luego agupamos por distrito. Finalmente sumamos cada una de las columnas de los partidos, votos blanco, nulos y censo del INE y votos válidos .  
 
 
@@ -248,4 +323,95 @@ getafe20191110Distrito <- getafe20191110 %>%
     validos=sum(validos)
     ) 
 ```
+  
+  
+```{r H10, echo=FALSE, results="asis"}
+library(knitr)
+kable(H10[1:3,1:8],caption="Detalle de la tabla por distritos (Principio)")
+```
+
+  
+```{r H10A, echo=FALSE, results="asis"}
+library(knitr)
+kable(H10[1:3,9:17],caption="Detalle de la tabla por distritos (Final)")
+```
+  
+  
+## Graficación  
+
+Ahora haremos el gráfico correspondiente a uno de los distritos.
+En primer lugar hay que crear varios vectores que serán parámetros de nuestra función de graficación:
+
+```{r graficVectores, include=TRUE, eval=FALSE}
+# El gráfico
+## Construir el data frame y las variables necesarias
+### Seleccionamos la fila con el distrito municipal de nuestro interés
+### Nombre del distrito
+xx <- "BUENAVISTA"
+dataGraficante <- getafe20191110Distrito %>% 
+  filter(DISTRITO==xx) %>% 
+  select(2:13) 
+dataGraficante <- as.data.frame(t(dataGraficante))
+dataGraficante$nomina <- rownames(dataGraficante)
+dataGraficante <- dataGraficante[order(dataGraficante$V1, decreasing = TRUE),]
+dataGraficanteAdd <- data.frame("V1"=sum(dataGraficante$V1[9:nrow(dataGraficante)]), "nomina"="Otros")
+dataGraficante <- rbind(dataGraficante[1:8,],dataGraficanteAdd[1,])
+percenta <- round((dataGraficante$V1/sum(dataGraficante$V1))*100,2)
+breaks <- cumsum(percenta)
+semiSegmenta <- breaks-(percenta/2)
+nomina <- c(dataGraficante$nomina)
+colores <- c("red","#551a8b","#00b200","#fa5000","#0073cf","#54EFa5","cornflowerblue","darksalmon","coral4")
+```
+  
+    
+  
+  
+Luego usamos la función gg.gauge:
+
+```{r graficFuncion, include=TRUE, eval=FALSE}
+# Gráfico para ocho partidos
+gg.gauge <- function(breaks,porcentaje) {
+  require(ggplot2)
+  get.poly <- function(a,b,r1=0.5,r2=1.0) {
+    th.start <- pi*(1-a/100)
+    th.end   <- pi*(1-b/100)
+    th       <- seq(th.start,th.end,length=100)
+    x        <- c(r1*cos(th),rev(r2*cos(th)))
+    y        <- c(r1*sin(th),rev(r2*sin(th)))
+    return(data.frame(x,y))
+  }
+  ggplot()+ 
+    geom_polygon(data=get.poly(0,breaks[1]),aes(x,y),fill=colores[1])+
+    geom_polygon(data=get.poly(breaks[1],breaks[2]),aes(x,y),fill=colores[2])+
+    geom_polygon(data=get.poly(breaks[2],breaks[3]),aes(x,y),fill=colores[3])+
+    geom_polygon(data=get.poly(breaks[3],breaks[4]),aes(x,y),fill=colores[4])+
+    geom_polygon(data=get.poly(breaks[4],breaks[5]),aes(x,y),fill=colores[5])+
+    geom_polygon(data=get.poly(breaks[5],breaks[6]),aes(x,y),fill=colores[6])+
+    geom_polygon(data=get.poly(breaks[6],breaks[7]),aes(x,y),fill=colores[7])+
+    geom_polygon(data=get.poly(breaks[7],breaks[8]),aes(x,y),fill=colores[8])+
+    geom_polygon(data=get.poly(breaks[8],breaks[9]),aes(x,y),fill=colores[9])+
+    geom_text(data=as.data.frame(porcentaje), size=ifelse(porcentaje>10,2,1), fontface="bold", vjust=0,
+              aes(x=0.75*cos(pi*(1-semiSegmenta/100)),y=0.75*sin(pi*(1-semiSegmenta/100)),label=paste0(nomina,": ",porcentaje,"%")))+
+    coord_fixed()+
+    labs(title=paste0("Porcentaje por partidos: ",xx),
+         caption = "Fuente: Min.In., Cálculos propios")+
+    theme_bw()+
+    theme(axis.text=element_blank(),
+          axis.title=element_blank(),
+          axis.ticks=element_blank(),
+          panel.grid=element_blank(),
+          panel.border=element_blank()) 
+  glipho<-paste0(xx,"porcentaje",".png")
+  ggsave(glipho,width=10, height=6,units="cm")
+}
+gg.gauge(breaks,percenta)
+```
+  
+\newpage  
+
+  
+Finalmente obtenemos el gráfico 
+
+
+![Gráfico de un distrito municipal](BUENAVISTAporcentaje.png)  
 

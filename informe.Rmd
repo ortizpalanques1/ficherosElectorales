@@ -1,0 +1,68 @@
+---
+title: Variación del voto de Cs en Getafe entre las elecciones de abril y noviembre
+  2019
+author: "Marco Ortiz Palanques"
+date: "4/18/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introducción  
+En este informe presentamos algunos aspectos resaltantes de la variación del voto para Ciudadanos en Getafe entre las elecciones generales de abril y noviembre de 2019. Aparte de la descricpción en sí, el punto más importante a resaltar es la relación que se presenta entre una mayor cantidad de renta percápita en las secciones censales y una mayor pérdida porcentual de voto para Ciudadanos.  
+
+## 1. Resultado general  
+El partido Ciudadanos en Getafe obtuvo, en las elecciones generales de abril de 2019, 20.548 votos y, en noviembre del mismo año, 8.340 votos. En total, hubo una pérdida de 12.208 votos. En términos porcentuales, esto significó pasar de 15,72% a 6,36%. De cada 10 electores de abril, 6 dejaron de votar a ciudadanos en noviembre.  
+Con respecto a los otros partidos cinco partidos con resultados más elevados del municipio, el PSOE y la alianza Podemos-IU también tuvieron pérdidas de votantes; mientras que PP y Vox los aumentaron. Más Madrid, un partido que no participó en abril de 2019, alcanzó en noviembre un 4,33%. Finalmente la abstención creció en más de un 5% al pasar de 19,49% a 24,53% (ver Figure 1).
+
+
+![Síntesis de la variación por partidos y abstención](TODOS.png)  
+
+## Renta por sección electoral y pérdida de voto
+Un punto importante para comprender esta pérdida de voto es saber si está relacionada con algunos aspectos demográficos. Para este municipio disponemos los datos de renta (2016) y edad de hombres y edad de mujeres (2015) por sección censal. Renta es un dato del que sabemos que correlaciona bien con las variaciones electorales. Por ello los pusimos a prueba en tres modelos:  
+
+
+1. Regresión de la pérdida de votos con el promedio de edad de los hombres y la renta de la sección electoral, más la interacción entre ambas variables explicativas. Usamos solo la edad de los hombres pues la edad de ambos sexos está correlacionada y esto puede interferir con la precisión de los modelos.  
+
+2. Regresión de la pérdida de votos con el promedio de edad de los hombres y la renta de la sección electoral, sin interacción.  
+3. Regresión de la pérdida de voto sólo con la renta.  
+
+De estos tres modelos, el segundo es el más relevante. Tanto la edad como la renta están asociadas con las pérdidas porcentuales de votos de Ciudadanos, aunque con distintas direcciones:  
+
+1. Para los promedios de edad por sección electoral y manteniendo la renta constante, una disminución de 5 años significa una disminución de 1% de votantes por Ciudadanos. En términos generales se perdieron más votos a medida que la sección electoral era más joven en los varones.  
+
+2. Para los promedios de renta por sección electoral y manteniendo la edad constante, un aumento de 2475 euros de renta anual en promedio significó un 1% menos de votos para Ciudadanos.  
+
+El modelo tres, con solamente la renta como predictor, también dio un resultado relevante. Sin embargo, por lo antes visto el modelo anterior tiene un mayor poder explicativo. Con propósitos ilustrativos, incluímos el gráfico de la renta versus la pérdida de voto de Ciudadanos entre ambas elecciones:  
+
+![Renta y pérdida de votos](SECCION.png)  
+\newpage 
+
+
+Los resultados de los tres modelos se muestran a continuación:  
+
+Modelo 1: 
+
+```{r }
+summary(regee00)
+```
+  
+  
+   
+  
+Modelo 2:
+```{r }
+summary(regee01)
+```
+  
+  
+\newpage    
+Modelo 3:  
+```{r }
+summary(regee02)
+```
+
+
+

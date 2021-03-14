@@ -1,3 +1,4 @@
+##### ARCHIVOS PRELIMINARES ####
 #Librerias
 library(readr)
 library(dplyr)
@@ -9,6 +10,20 @@ DISTRITOS2019 <- sqlFetch(conn,"DISTRITOS2019")
 #Al venir de la base de datos, la columna de ID (que está hecha de números) es cambiada a numérica.
 #Por ello toca nuevamente volverla a caracter.
 DISTRITOS2019$ID2019 <- as.character(DISTRITOS2019$ID2019)
+##### DATOS GENERALES ####
+# Escriba aquí la fecha de la elección
+FECHA <- " Nov., 2019"
+# El lugar debe consultarse con los códigos del INE
+# Dos primeros números: Código comunidad.
+# Números tres y cuatro: Código provincia.
+# Números cinco a siete: Código municipio
+LUGAR <- c("0118098")
+# Colocar aquí el nivel: "M"=Municipio,"D"=Distrito
+NIVEL <- "M"
+# Si se eligió municipio, esribir nombre del municipio.
+# Si se eligió distrio, poner nombre del distrito
+NOMBRENIVEL <- "Huéscar"
+##### PROCESAMIENTO DE ARCHIVOS ####
 #Crear columnas en el fichero 03
 X03021911$partidos <- substr(X03021911$X1,9,14)
 X03021911$nombreCorto <- substr(X03021911$X1,15,64)
@@ -40,13 +55,14 @@ X10021911$votos <- as.numeric(X10021911$votos)
 #Poner los nombres de los partidos y arreglar data.frame
 X10021911 <- left_join(X10021911,X03021911[,2:3],by="partidos")
 X10021911 <- X10021911[,c(2,3,4,5,8,7)]
+##### EXTRAER DATOS DE INTERÉS #####
 #Extraer el municipio de interés de archivo X09021911
 getafeTotales <- X09021911 %>% 
-  filter(localidad=="1228065") %>% 
+  filter(localidad==LUGAR) %>% 
   select(6:10)
 #Extraer el municipio de interés de archivo X10021911
 getafe20191110 <- X10021911 %>%
-  filter(localidad=="1228065") %>%
+  filter(localidad==LUGAR) %>%
   mutate(ID2019=paste0(distrito,seccion)) %>%
   pivot_wider(names_from=nombreCorto, values_from=votos) %>%
   group_by(ID2019)
@@ -57,6 +73,13 @@ getafe20191110$ID2019 <- paste0(substr(getafe20191110$ID2019,2,2),substr(getafe2
 getafe20191110 <- left_join(getafe20191110,getafeTotales,by="ID2019Mesa")
 #Añadir los distritos a getafe20191110
 getafe20191110 <- left_join(getafe20191110,DISTRITOS2019,by="ID2019")
+# Vector con secciones
+vectorSecciones <- unique(getafe20191110$ID2019)
+#Agrupar por Municipio
+getafe20191110Municipio <- getafe20191110 %>% 
+  ungroup() %>%
+  dplyr::select(6:ncol(.)) %>% 
+  summarise_if(is.numeric,sum)
 #Agrupar por distrito
 getafe20191110Distrito <- getafe20191110 %>% 
   select(5:24) %>% 
@@ -102,23 +125,29 @@ getafe20191110Seccion <- getafe20191110 %>%
     validos=sum(validos)
   ) 
 # El gráfico
-## Construir el data frame y las variables necesarias
-### Seleccionamos la fila con el distrito municipal de nuestro interés
-### Nombre del distrito
-xx <- "Valle Arriba"
-dataGraficante <- getafe20191110Distrito %>% 
-  filter(DISTRITO==xx) %>% 
-  select(2:13) 
+
+if (NIVEL=="M"){
+  xx <- NOMBRENIVEL
+  dataGraficante <- getafe20191110Municipio
+  dataGraficante <- dataGraficante[1:(length(dataGraficante)-4)]
+} else {
+  ## Construir el data frame y las variables necesarias
+  ### Seleccionamos la fila con el distrito municipal de nuestro interés
+  xx <- NOMBRENIVEL
+  dataGraficante <- getafe20191110Distrito %>% 
+    filter(DISTRITO==xx) %>% 
+    select(2:13) 
+}
 dataGraficante <- as.data.frame(t(dataGraficante))
 dataGraficante$nomina <- rownames(dataGraficante)
 dataGraficante <- dataGraficante[order(dataGraficante$V1, decreasing = TRUE),]
 dataGraficanteAdd <- data.frame("V1"=sum(dataGraficante$V1[9:nrow(dataGraficante)]), "nomina"="Otros")
 dataGraficante <- rbind(dataGraficante[1:8,],dataGraficanteAdd[1,])
 percenta <- round((dataGraficante$V1/sum(dataGraficante$V1))*100,2)
-breaks <- cumsum(porcentaje)
+breaks <- cumsum(percenta)
 semiSegmenta <- breaks-(percenta/2)
-nomina <- c("apple","pear","orange","eggplant","lettuce","cherry","banana","carrot","mango")
-colores <- c("coral","chartreuse3","darkorange","darkorchid","chartreuse1","darkred","darkorange1","darksalmon","yellow")
+nomina <- c(dataGraficante$nomina)
+colores <- c("red","#0073cf","#00b200","#fa5000","#551a8b","#54EFa5","cornflowerblue","darksalmon","coral4")
 
 # Gráfico para ocho partidos
 gg.gauge <- function(breaks,porcentaje) {
@@ -144,7 +173,7 @@ gg.gauge <- function(breaks,porcentaje) {
     geom_text(data=as.data.frame(porcentaje), size=ifelse(porcentaje>10,2,1), fontface="bold", vjust=0,
               aes(x=0.75*cos(pi*(1-semiSegmenta/100)),y=0.75*sin(pi*(1-semiSegmenta/100)),label=paste0(nomina,": ",porcentaje,"%")))+
     coord_fixed()+
-    labs(title=paste0("Porcentaje por partidos: ",xx),
+    labs(title=paste0("Porcentaje por partidos: ",xx,FECHA),
          caption = "Fuente: Min.In., Cálculos propios")+
     theme_bw()+
     theme(axis.text=element_blank(),
@@ -156,3 +185,4 @@ gg.gauge <- function(breaks,porcentaje) {
   ggsave(glipho,width=10, height=6,units="cm")
 }
 gg.gauge(breaks,percenta)
+render("Manual.Rmd")
